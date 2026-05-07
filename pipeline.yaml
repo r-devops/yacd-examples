@@ -10,7 +10,7 @@ stages:
     steps:
       - name: run-lint
         run: |
-          echo -e "\e[033mLinting ${APP_NAME}..."
+          echo -e "\e[1;31m Linting ${APP_NAME}...\e[0m"
           echo "Checking code style..."
           sleep 2
           echo "Lint passed!"
