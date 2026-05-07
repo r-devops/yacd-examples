@@ -1,0 +1,61 @@
+name: sample-app
+description: Sample CI/CD pipeline demonstrating YACD features
+
+variables:
+  APP_NAME: sample-app
+  GO_VERSION: "1.22"
+
+stages:
+  - name: lint
+    steps:
+      - name: run-lint
+        run: |
+          echo "Linting ${APP_NAME}..."
+          echo "Checking code style..."
+          sleep 2
+          echo "Lint passed!"
+
+  - name: test
+    steps:
+      - name: unit-tests
+        run: |
+          echo "Running unit tests for ${APP_NAME}..."
+          sleep 3
+          echo "All 42 tests passed!"
+      - name: integration-tests
+        run: |
+          echo "Running integration tests..."
+          sleep 2
+          echo "Integration tests passed!"
+
+  - name: build
+    needs: [lint, test]
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME} with Go ${GO_VERSION}..."
+          sleep 2
+          echo "Build artifact: ${APP_NAME}-linux-amd64"
+          echo "Build successful!"
+
+  - name: deploy-staging
+    needs: [build]
+    steps:
+      - name: deploy
+        run: |
+          echo "Deploying ${APP_NAME} to staging..."
+          sleep 2
+          echo "Deployment complete: https://staging.example.com"
+        env:
+          DEPLOY_ENV: staging
+
+  - name: deploy-prod
+    needs: [deploy-staging]
+    steps:
+      - name: deploy
+        run: |
+          echo "Deploying ${APP_NAME} to production..."
+          sleep 3
+          echo "Deployment complete: https://app.example.com"
+        env:
+          DEPLOY_ENV: production
