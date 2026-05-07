@@ -1,61 +1,368 @@
 name: sample-app
-description: Sample CI/CD pipeline demonstrating YACD features
+description: Large dummy CI/CD pipeline demonstrating YACD features
 
 variables:
   APP_NAME: sample-app
   GO_VERSION: "1.22"
 
 stages:
-  - name: lint
+  - name: stage-01
     steps:
-      - name: run-lint
+      - name: step-01
         run: |
-          echo -e "\e[1;31m Linting ${APP_NAME}...\e[0m"
-          echo "Checking code style..."
-          sleep 2
-          echo "Lint passed!"
+          echo "Running stage-01 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-01"
 
-  - name: test
+  - name: stage-02
+    needs: [stage-01]
     steps:
-      - name: unit-tests
+      - name: step-02
         run: |
-          echo "Running unit tests for ${APP_NAME}..."
-          sleep 3
-          echo "All 42 tests passed!"
-      - name: integration-tests
-        run: |
-          echo "Running integration tests..."
-          sleep 2
-          echo "Integration tests passed!"
+          echo "Running stage-02 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-02"
 
-  - name: build
-    needs: [lint, test]
+  - name: stage-03
+    needs: [stage-02]
     steps:
-      - name: compile
+      - name: step-03
         run: |
-          echo "Building ${APP_NAME} with Go ${GO_VERSION}..."
-          sleep 2
-          echo "Build artifact: ${APP_NAME}-linux-amd64"
-          echo "Build successful!"
+          echo "Running stage-03 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-03"
 
-  - name: deploy-staging
-    needs: [build]
+  - name: stage-04
+    needs: [stage-03]
     steps:
-      - name: deploy
+      - name: step-04
         run: |
-          echo "Deploying ${APP_NAME} to staging..."
-          sleep 2
-          echo "Deployment complete: https://staging.example.com"
-        env:
-          DEPLOY_ENV: staging
+          echo "Running stage-04 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-04"
 
-  - name: deploy-prod
-    needs: [deploy-staging]
+  - name: stage-05
+    needs: [stage-04]
     steps:
-      - name: deploy
+      - name: step-05
         run: |
-          echo "Deploying ${APP_NAME} to production..."
-          sleep 3
-          echo "Deployment complete: https://app.example.com"
+          echo "Running stage-05 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-05"
+
+  - name: stage-06
+    needs: [stage-05]
+    steps:
+      - name: step-06
+        run: |
+          echo "Running stage-06 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-06"
+
+  - name: stage-07
+    needs: [stage-06]
+    steps:
+      - name: step-07
+        run: |
+          echo "Running stage-07 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-07"
+
+  - name: stage-08
+    needs: [stage-07]
+    steps:
+      - name: step-08
+        run: |
+          echo "Running stage-08 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-08"
+
+  - name: stage-09
+    needs: [stage-08]
+    steps:
+      - name: step-09
+        run: |
+          echo "Running stage-09 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-09"
+
+  - name: stage-10
+    needs: [stage-09]
+    steps:
+      - name: step-10
+        run: |
+          echo "Running stage-10 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-10"
+
+  - name: stage-11
+    needs: [stage-10]
+    steps:
+      - name: step-11
+        run: |
+          echo "Running stage-11 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-11"
+
+  - name: stage-12
+    needs: [stage-11]
+    steps:
+      - name: step-12
+        run: |
+          echo "Running stage-12 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-12"
+
+  - name: stage-13
+    needs: [stage-12]
+    steps:
+      - name: step-13
+        run: |
+          echo "Running stage-13 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-13"
+
+  - name: stage-14
+    needs: [stage-13]
+    steps:
+      - name: step-14
+        run: |
+          echo "Running stage-14 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-14"
+
+  - name: stage-15
+    needs: [stage-14]
+    steps:
+      - name: step-15
+        run: |
+          echo "Running stage-15 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-15"
+
+  - name: stage-16
+    needs: [stage-15]
+    steps:
+      - name: step-16
+        run: |
+          echo "Running stage-16 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-16"
+
+  - name: stage-17
+    needs: [stage-16]
+    steps:
+      - name: step-17
+        run: |
+          echo "Running stage-17 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-17"
+
+  - name: stage-18
+    needs: [stage-17]
+    steps:
+      - name: step-18
+        run: |
+          echo "Running stage-18 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-18"
+
+  - name: stage-19
+    needs: [stage-18]
+    steps:
+      - name: step-19
+        run: |
+          echo "Running stage-19 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-19"
+
+  - name: stage-20
+    needs: [stage-19]
+    steps:
+      - name: step-20
+        run: |
+          echo "Running stage-20 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-20"
+
+  - name: stage-21
+    needs: [stage-20]
+    steps:
+      - name: step-21
+        run: |
+          echo "Running stage-21 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-21"
+
+  - name: stage-22
+    needs: [stage-21]
+    steps:
+      - name: step-22
+        run: |
+          echo "Running stage-22 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-22"
+
+  - name: stage-23
+    needs: [stage-22]
+    steps:
+      - name: step-23
+        run: |
+          echo "Running stage-23 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-23"
+
+  - name: stage-24
+    needs: [stage-23]
+    steps:
+      - name: step-24
+        run: |
+          echo "Running stage-24 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-24"
+
+  - name: stage-25
+    needs: [stage-24]
+    steps:
+      - name: step-25
+        run: |
+          echo "Running stage-25 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-25"
+
+  - name: stage-26
+    needs: [stage-25]
+    steps:
+      - name: step-26
+        run: |
+          echo "Running stage-26 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-26"
+
+  - name: stage-27
+    needs: [stage-26]
+    steps:
+      - name: step-27
+        run: |
+          echo "Running stage-27 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-27"
+
+  - name: stage-28
+    needs: [stage-27]
+    steps:
+      - name: step-28
+        run: |
+          echo "Running stage-28 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-28"
+
+  - name: stage-29
+    needs: [stage-28]
+    steps:
+      - name: step-29
+        run: |
+          echo "Running stage-29 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-29"
+
+  - name: stage-30
+    needs: [stage-29]
+    steps:
+      - name: step-30
+        run: |
+          echo "Running stage-30 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-30"
+
+  - name: stage-31
+    needs: [stage-30]
+    steps:
+      - name: step-31
+        run: |
+          echo "Running stage-31 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-31"
+
+  - name: stage-32
+    needs: [stage-31]
+    steps:
+      - name: step-32
+        run: |
+          echo "Running stage-32 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-32"
+
+  - name: stage-33
+    needs: [stage-32]
+    steps:
+      - name: step-33
+        run: |
+          echo "Running stage-33 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-33"
+
+  - name: stage-34
+    needs: [stage-33]
+    steps:
+      - name: step-34
+        run: |
+          echo "Running stage-34 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-34"
+
+  - name: stage-35
+    needs: [stage-34]
+    steps:
+      - name: step-35
+        run: |
+          echo "Running stage-35 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-35"
+
+  - name: stage-36
+    needs: [stage-35]
+    steps:
+      - name: step-36
+        run: |
+          echo "Running stage-36 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-36"
+
+  - name: stage-37
+    needs: [stage-36]
+    steps:
+      - name: step-37
+        run: |
+          echo "Running stage-37 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-37"
+
+  - name: stage-38
+    needs: [stage-37]
+    steps:
+      - name: step-38
+        run: |
+          echo "Running stage-38 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-38"
+
+  - name: stage-39
+    needs: [stage-38]
+    steps:
+      - name: step-39
+        run: |
+          echo "Running stage-39 for ${APP_NAME}"
+          sleep 1
+          echo "Completed stage-39"
+
+  - name: stage-40
+    needs: [stage-39]
+    steps:
+      - name: step-40
+        run: |
+          echo "Running final deployment for ${APP_NAME}"
+          sleep 1
+          echo "Pipeline completed successfully!"
         env:
           DEPLOY_ENV: production
