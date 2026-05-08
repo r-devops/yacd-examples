@@ -1,5 +1,6 @@
 name: Build and Test
 description: Build application with configurable Go version and run test suite
+trigger_mode: auto
 
 inputs:
   go_version:

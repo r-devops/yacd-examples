@@ -1,5 +1,6 @@
 name: Infrastructure Provisioning
 description: Provision or destroy cloud infrastructure using Terraform
+trigger_mode: manual
 
 inputs:
   action:

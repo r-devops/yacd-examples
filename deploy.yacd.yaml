@@ -1,5 +1,6 @@
 name: Deploy Application
 description: Deploy the application to a target environment with configurable options
+trigger_mode: manual
 
 inputs:
   environment:
