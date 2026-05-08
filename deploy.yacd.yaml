@@ -1,0 +1,93 @@
+name: Deploy Application
+description: Deploy the application to a target environment with configurable options
+
+inputs:
+  environment:
+    type: choice
+    description: Target deployment environment
+    default: staging
+    options:
+      - dev
+      - staging
+      - production
+
+  version:
+    type: string
+    description: Application version to deploy (e.g. v1.2.3 or latest)
+    default: latest
+
+  replicas:
+    type: number
+    description: Number of pod replicas
+    default: 3
+
+  dry_run:
+    type: boolean
+    description: Simulate deployment without making changes
+    default: false
+
+  release_notes:
+    type: text
+    description: Release notes for this deployment
+    default: ""
+
+variables:
+  APP_NAME: sample-app
+  NAMESPACE: apps
+
+stages:
+  - name: validate
+    steps:
+      - name: check-inputs
+        run: |
+          echo "=== Deployment Configuration ==="
+          echo "App:         ${APP_NAME}"
+          echo "Environment: ${environment}"
+          echo "Version:     ${version}"
+          echo "Replicas:    ${replicas}"
+          echo "Dry Run:     ${dry_run}"
+          echo "Namespace:   ${NAMESPACE}"
+          if [ -n "${release_notes}" ]; then
+            echo "Notes:       ${release_notes}"
+          fi
+
+  - name: build
+    needs: [validate]
+    steps:
+      - name: build-image
+        run: |
+          echo "Building ${APP_NAME}:${version}..."
+          sleep 1
+          echo "Image built successfully"
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: run-tests
+        run: |
+          echo "Running integration tests for ${APP_NAME}:${version}..."
+          sleep 1
+          echo "All tests passed"
+
+  - name: deploy
+    needs: [test]
+    steps:
+      - name: deploy-to-env
+        run: |
+          if [ "${dry_run}" = "true" ]; then
+            echo "[DRY RUN] Would deploy ${APP_NAME}:${version} to ${environment} with ${replicas} replicas"
+          else
+            echo "Deploying ${APP_NAME}:${version} to ${environment}..."
+            echo "Setting replicas to ${replicas} in namespace ${NAMESPACE}"
+            sleep 2
+            echo "Deployment complete!"
+          fi
+
+  - name: verify
+    needs: [deploy]
+    steps:
+      - name: health-check
+        run: |
+          echo "Running health check on ${environment}..."
+          sleep 1
+          echo "Health check passed - ${APP_NAME}:${version} is healthy"

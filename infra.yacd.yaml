@@ -1,0 +1,93 @@
+name: Infrastructure Provisioning
+description: Provision or destroy cloud infrastructure using Terraform
+
+inputs:
+  action:
+    type: choice
+    description: Terraform action to perform
+    default: plan
+    options:
+      - plan
+      - apply
+      - destroy
+
+  cloud_region:
+    type: choice
+    description: Cloud region for resources
+    default: us-east-1
+    options:
+      - us-east-1
+      - us-west-2
+      - eu-west-1
+      - ap-south-1
+
+  instance_type:
+    type: string
+    description: EC2 instance type
+    default: t3.medium
+
+  node_count:
+    type: number
+    description: Number of worker nodes
+    default: 3
+
+  auto_approve:
+    type: boolean
+    description: Auto-approve terraform apply (skip confirmation)
+    default: false
+
+  extra_vars:
+    type: text
+    description: Additional Terraform variables (KEY=VALUE per line)
+    default: ""
+
+variables:
+  PROJECT: velocix-infra
+  TF_DIR: ./terraform
+
+stages:
+  - name: init
+    steps:
+      - name: terraform-init
+        run: |
+          echo "=== Infrastructure Config ==="
+          echo "Project:      ${PROJECT}"
+          echo "Action:       ${action}"
+          echo "Region:       ${cloud_region}"
+          echo "Instance:     ${instance_type}"
+          echo "Nodes:        ${node_count}"
+          echo "Auto Approve: ${auto_approve}"
+          echo ""
+          echo "Initializing Terraform in ${TF_DIR}..."
+          sleep 1
+          echo "Terraform initialized"
+
+  - name: validate
+    needs: [init]
+    steps:
+      - name: terraform-validate
+        run: |
+          echo "Validating Terraform configuration..."
+          sleep 1
+          echo "Configuration is valid"
+
+  - name: execute
+    needs: [validate]
+    steps:
+      - name: terraform-action
+        run: |
+          echo "Running terraform ${action} in ${cloud_region}..."
+          echo "  instance_type = ${instance_type}"
+          echo "  node_count    = ${node_count}"
+          if [ -n "${extra_vars}" ]; then
+            echo "  extra vars:"
+            echo "  ${extra_vars}"
+          fi
+          sleep 2
+          if [ "${action}" = "destroy" ]; then
+            echo "Resources destroyed in ${cloud_region}"
+          elif [ "${action}" = "apply" ]; then
+            echo "Resources provisioned in ${cloud_region}: ${node_count}x ${instance_type}"
+          else
+            echo "Plan complete - ${node_count} resources would be created"
+          fi

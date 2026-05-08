@@ -1,0 +1,90 @@
+name: Build and Test
+description: Build application with configurable Go version and run test suite
+
+inputs:
+  go_version:
+    type: choice
+    description: Go version to use for building
+    default: "1.22"
+    options:
+      - "1.21"
+      - "1.22"
+      - "1.23"
+
+  branch:
+    type: string
+    description: Git branch to build from
+    default: main
+
+  run_lint:
+    type: boolean
+    description: Run linter before building
+    default: true
+
+  test_timeout:
+    type: number
+    description: Test timeout in seconds
+    default: 300
+
+  build_args:
+    type: text
+    description: Extra build arguments (one per line)
+    default: ""
+
+variables:
+  APP_NAME: sample-app
+  BUILD_DIR: ./bin
+
+stages:
+  - name: setup
+    steps:
+      - name: prepare
+        run: |
+          echo "=== Build Configuration ==="
+          echo "App:          ${APP_NAME}"
+          echo "Branch:       ${branch}"
+          echo "Go Version:   ${go_version}"
+          echo "Run Lint:     ${run_lint}"
+          echo "Test Timeout: ${test_timeout}s"
+          echo "Build Dir:    ${BUILD_DIR}"
+          if [ -n "${build_args}" ]; then
+            echo "Build Args:   ${build_args}"
+          fi
+
+  - name: lint
+    needs: [setup]
+    steps:
+      - name: golangci-lint
+        run: |
+          if [ "${run_lint}" = "true" ]; then
+            echo "Running golangci-lint on branch ${branch}..."
+            sleep 1
+            echo "Lint passed - no issues found"
+          else
+            echo "Linting skipped"
+          fi
+
+  - name: build
+    needs: [lint]
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME} with Go ${go_version}..."
+          echo "Output: ${BUILD_DIR}/${APP_NAME}"
+          sleep 2
+          echo "Build successful"
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: unit-tests
+        run: |
+          echo "Running tests with ${test_timeout}s timeout..."
+          sleep 1
+          echo "42 tests passed, 0 failed"
+
+      - name: coverage
+        run: |
+          echo "Generating coverage report..."
+          sleep 1
+          echo "Coverage: 87.3%"
