@@ -10,7 +10,7 @@ triggers:
     branches:
       - main
   schedule:
-    - cron: "0 2 * * *"
+    - cron: "0 0 2 * * *"
 
 variables:
   APP_NAME: nightly-build
