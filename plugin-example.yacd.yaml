@@ -1,0 +1,45 @@
+name: plugin-demo
+description: Demonstrates YACD plugin system with notifications and artifact upload
+trigger_mode: manual
+
+inputs:
+  environment:
+    type: choice
+    description: Target deployment environment
+    options: [staging, production]
+    default: staging
+  notify_channel:
+    type: string
+    description: Slack channel for notifications
+    default: "#deployments"
+
+variables:
+  APP_NAME: my-service
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME} for ${environment}..."
+          mkdir -p dist
+          echo "build-artifact-${APP_NAME}-v1.0" > dist/app.tar.gz
+          echo "Build complete."
+
+  - name: notify
+    needs: [build]
+    steps:
+      - name: slack-notification
+        plugin: yacd/slack-notify:v1
+        with:
+          webhook_url: "${SLACK_WEBHOOK}"
+          channel: "${notify_channel}"
+          message: "Build of ${APP_NAME} for ${environment} completed successfully"
+          color: "good"
+
+      - name: call-webhook
+        plugin: yacd/webhook:v1
+        with:
+          url: "https://api.example.com/deployments"
+          method: "POST"
+          body: '{"app": "${APP_NAME}", "env": "${environment}", "status": "built"}'
