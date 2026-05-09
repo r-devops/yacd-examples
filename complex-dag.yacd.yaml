@@ -1,0 +1,113 @@
+name: Complex DAG
+description: Diamond dependency pattern with multiple convergence points
+
+stages:
+  - name: init
+    steps:
+      - name: setup
+        run: |
+          echo "Initializing workspace..."
+          sleep 1
+          echo "Workspace ready"
+
+  - name: lint-go
+    needs: [init]
+    steps:
+      - name: golangci
+        run: |
+          echo "Running Go linter..."
+          sleep 1
+          echo "Go lint passed"
+
+  - name: lint-ts
+    needs: [init]
+    steps:
+      - name: eslint
+        run: |
+          echo "Running TypeScript linter..."
+          sleep 1
+          echo "TS lint passed"
+
+  - name: lint-docker
+    needs: [init]
+    steps:
+      - name: hadolint
+        run: |
+          echo "Linting Dockerfiles..."
+          sleep 1
+          echo "Dockerfile lint passed"
+
+  - name: test-backend
+    needs: [lint-go]
+    steps:
+      - name: unit
+        run: |
+          echo "Backend unit tests..."
+          sleep 2
+          echo "156 tests passed"
+
+  - name: test-frontend
+    needs: [lint-ts]
+    steps:
+      - name: jest
+        run: |
+          echo "Frontend unit tests..."
+          sleep 2
+          echo "203 tests passed"
+
+  - name: test-e2e
+    needs: [test-backend, test-frontend]
+    steps:
+      - name: cypress
+        run: |
+          echo "Running E2E tests..."
+          sleep 3
+          echo "45 E2E scenarios passed"
+
+  - name: build-backend
+    needs: [test-backend]
+    steps:
+      - name: go-build
+        run: |
+          echo "Building Go backend..."
+          sleep 2
+          echo "Backend binary ready"
+
+  - name: build-frontend
+    needs: [test-frontend]
+    steps:
+      - name: vite-build
+        run: |
+          echo "Building frontend with Vite..."
+          sleep 2
+          echo "Frontend bundle ready"
+
+  - name: build-docker
+    needs: [build-backend, build-frontend, lint-docker]
+    steps:
+      - name: docker-build
+        run: |
+          echo "Building multi-stage Docker image..."
+          sleep 2
+          echo "Image built: myapp:latest (124MB)"
+
+  - name: publish
+    needs: [build-docker, test-e2e]
+    steps:
+      - name: push-image
+        run: |
+          echo "Pushing to container registry..."
+          sleep 1
+          echo "Image published"
+
+  - name: deploy
+    needs: [publish]
+    approval:
+      required: 1
+      timeout: "1h"
+    steps:
+      - name: rollout
+        run: |
+          echo "Deploying to production..."
+          sleep 2
+          echo "Deployment complete"

@@ -1,0 +1,98 @@
+name: Manual Deploy
+description: Manual-only pipeline with rich input parameters
+trigger_mode: manual
+
+inputs:
+  service:
+    type: choice
+    description: Service to deploy
+    required: true
+    options:
+      - api-gateway
+      - auth-service
+      - payment-service
+      - notification-service
+      - all
+
+  environment:
+    type: choice
+    description: Target environment
+    default: staging
+    options:
+      - dev
+      - staging
+      - production
+
+  version:
+    type: string
+    description: Docker image tag to deploy
+    required: true
+    default: "latest"
+
+  replicas:
+    type: number
+    description: Number of replicas
+    default: 3
+
+  dry_run:
+    type: boolean
+    description: Perform a dry run without actual deployment
+    default: false
+
+  notes:
+    type: text
+    description: Deployment notes (optional)
+    default: ""
+
+variables:
+  CLUSTER: k8s-main
+
+stages:
+  - name: preflight
+    steps:
+      - name: validate
+        run: |
+          echo "=== Deployment Configuration ==="
+          echo "Service:     ${service}"
+          echo "Environment: ${environment}"
+          echo "Version:     ${version}"
+          echo "Replicas:    ${replicas}"
+          echo "Dry Run:     ${dry_run}"
+          echo "Cluster:     ${CLUSTER}"
+          if [ -n "${notes}" ]; then
+            echo "Notes:       ${notes}"
+          fi
+
+      - name: check-image
+        run: |
+          echo "Checking image availability..."
+          sleep 1
+          echo "Image ${service}:${version} found in registry"
+
+  - name: deploy
+    needs: [preflight]
+    steps:
+      - name: rollout
+        run: |
+          if [ "${dry_run}" = "true" ]; then
+            echo "[DRY RUN] Would deploy ${service}:${version} to ${environment}"
+            echo "[DRY RUN] Replicas: ${replicas}"
+          else
+            echo "Deploying ${service}:${version} to ${environment}..."
+            echo "Setting replicas to ${replicas}"
+            sleep 2
+            echo "Deployment complete"
+          fi
+
+  - name: verify
+    needs: [deploy]
+    steps:
+      - name: health-check
+        run: |
+          if [ "${dry_run}" = "true" ]; then
+            echo "[DRY RUN] Would verify deployment"
+          else
+            echo "Running health checks on ${environment}..."
+            sleep 1
+            echo "All ${replicas} replicas healthy"
+          fi

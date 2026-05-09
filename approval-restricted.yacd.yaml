@@ -1,0 +1,68 @@
+name: Restricted Approval Demo
+description: Approval gates with specific allowed users and groups
+
+variables:
+  APP_NAME: banking-api
+  ENV: production
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME}..."
+          sleep 1
+          echo "Build complete"
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: security-audit
+        run: |
+          echo "Running OWASP security audit..."
+          sleep 2
+          echo "No critical vulnerabilities found"
+      - name: compliance-check
+        run: |
+          echo "Running PCI-DSS compliance checks..."
+          sleep 1
+          echo "All compliance checks passed"
+
+  - name: deploy-staging
+    needs: [test]
+    steps:
+      - name: deploy
+        run: |
+          echo "Deploying to staging..."
+          sleep 2
+          echo "Staging deployment verified"
+
+  - name: deploy-production
+    needs: [deploy-staging]
+    approval:
+      required: 2
+      users:
+        - admin@yacd.local
+        - lead@yacd.local
+      groups:
+        - platform-team
+        - security-team
+      timeout: "4h"
+    steps:
+      - name: backup
+        run: |
+          echo "Creating database backup..."
+          sleep 1
+          echo "Backup created: db-backup-20260509.sql.gz"
+
+      - name: deploy
+        run: |
+          echo "Deploying ${APP_NAME} to ${ENV}..."
+          sleep 2
+          echo "Production deployment complete"
+
+      - name: verify
+        run: |
+          echo "Running post-deploy verification..."
+          sleep 1
+          echo "All systems operational"

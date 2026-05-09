@@ -1,0 +1,54 @@
+name: Scheduled Pipeline
+description: Demonstrates push, PR, and cron schedule triggers
+
+triggers:
+  push:
+    branches:
+      - main
+      - release/*
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 2 * * *"
+
+variables:
+  APP_NAME: nightly-build
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME}..."
+          sleep 1
+          echo "Build complete"
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: full-suite
+        run: |
+          echo "Running full test suite (nightly)..."
+          sleep 2
+          echo "All 1,247 tests passed"
+        timeout: 600s
+
+  - name: performance-test
+    needs: [build]
+    steps:
+      - name: benchmark
+        run: |
+          echo "Running performance benchmarks..."
+          sleep 3
+          echo "P50: 12ms, P95: 45ms, P99: 120ms"
+          echo "No regressions detected"
+
+  - name: report
+    needs: [test, performance-test]
+    steps:
+      - name: generate
+        run: |
+          echo "Generating nightly report..."
+          sleep 1
+          echo "Report published to dashboard"

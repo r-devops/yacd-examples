@@ -1,0 +1,77 @@
+name: Custom Container Images
+description: Run steps in specific Docker images (Node, Python, Go, etc.)
+
+variables:
+  APP_NAME: polyglot-app
+
+stages:
+  - name: frontend
+    steps:
+      - name: install
+        run: |
+          echo "Installing Node.js dependencies..."
+          sleep 1
+          echo "Added 847 packages"
+
+      - name: build
+        run: |
+          echo "Building React frontend..."
+          sleep 2
+          echo "Frontend built: dist/ (1.2MB)"
+
+      - name: test
+        run: |
+          echo "Running frontend tests with Vitest..."
+          sleep 1
+          echo "124 tests passed"
+
+  - name: backend-api
+    steps:
+      - name: build
+        run: |
+          echo "Building Go API server..."
+          sleep 2
+          echo "Binary: api-server (22MB)"
+
+      - name: test
+        run: |
+          echo "Running Go tests..."
+          sleep 1
+          echo "go test ./... - 89 tests passed"
+
+  - name: ml-service
+    steps:
+      - name: install-deps
+        run: |
+          echo "Installing Python dependencies..."
+          sleep 1
+          echo "pip install -r requirements.txt complete"
+
+      - name: test
+        run: |
+          echo "Running pytest..."
+          sleep 2
+          echo "56 tests passed, coverage: 91%"
+
+  - name: integration
+    needs: [frontend, backend-api, ml-service]
+    steps:
+      - name: docker-compose-test
+        run: |
+          echo "Starting all services with docker-compose..."
+          sleep 2
+          echo "Running cross-service integration tests..."
+          sleep 2
+          echo "All integration tests passed"
+
+  - name: package
+    needs: [integration]
+    steps:
+      - name: build-images
+        run: |
+          echo "Building Docker images for all services..."
+          echo "  frontend:latest - 89MB"
+          echo "  api-server:latest - 45MB"
+          echo "  ml-service:latest - 1.2GB"
+          sleep 2
+          echo "All images pushed to registry"

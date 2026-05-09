@@ -1,0 +1,77 @@
+name: Parallel DAG Pipeline
+description: Fan-out and fan-in pattern with parallel stage execution
+
+variables:
+  APP_NAME: web-platform
+
+stages:
+  - name: checkout
+    steps:
+      - name: clone
+        run: |
+          echo "Cloning repository..."
+          sleep 1
+          echo "Repository cloned"
+
+  - name: lint
+    needs: [checkout]
+    steps:
+      - name: eslint
+        run: |
+          echo "Running ESLint..."
+          sleep 1
+          echo "No lint errors found"
+
+  - name: unit-tests
+    needs: [checkout]
+    steps:
+      - name: jest
+        run: |
+          echo "Running Jest unit tests..."
+          sleep 2
+          echo "248 tests passed"
+
+  - name: security-scan
+    needs: [checkout]
+    steps:
+      - name: trivy
+        run: |
+          echo "Running Trivy security scan..."
+          sleep 2
+          echo "No vulnerabilities found"
+
+  - name: build-frontend
+    needs: [lint, unit-tests]
+    steps:
+      - name: webpack
+        run: |
+          echo "Building frontend with webpack..."
+          sleep 2
+          echo "Frontend bundle: 842KB (gzipped)"
+
+  - name: build-backend
+    needs: [lint, unit-tests]
+    steps:
+      - name: compile
+        run: |
+          echo "Building backend Go binary..."
+          sleep 2
+          echo "Backend binary: 18MB"
+
+  - name: build-docker
+    needs: [build-frontend, build-backend, security-scan]
+    steps:
+      - name: docker-build
+        run: |
+          echo "Building Docker image ${APP_NAME}:latest..."
+          sleep 2
+          echo "Docker image built: 156MB"
+
+  - name: deploy
+    needs: [build-docker]
+    steps:
+      - name: push-and-deploy
+        run: |
+          echo "Pushing image and deploying..."
+          sleep 1
+          echo "Deployment successful"

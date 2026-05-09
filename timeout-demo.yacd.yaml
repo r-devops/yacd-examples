@@ -1,0 +1,40 @@
+name: Timeout Demo
+description: Pipeline and step-level timeout configuration
+
+timeout: 600s
+
+stages:
+  - name: quick-check
+    steps:
+      - name: health
+        run: |
+          echo "Quick health check..."
+          echo "System healthy"
+        timeout: 10s
+
+  - name: long-running
+    needs: [quick-check]
+    steps:
+      - name: data-migration
+        run: |
+          echo "Running data migration..."
+          sleep 3
+          echo "Migration complete: 10,000 rows processed"
+        timeout: 300s
+
+      - name: index-rebuild
+        run: |
+          echo "Rebuilding database indexes..."
+          sleep 2
+          echo "Indexes rebuilt"
+        timeout: 120s
+
+  - name: validate
+    needs: [long-running]
+    steps:
+      - name: integrity-check
+        run: |
+          echo "Validating data integrity..."
+          sleep 1
+          echo "All integrity checks passed"
+        timeout: 60s

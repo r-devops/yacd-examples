@@ -1,0 +1,69 @@
+name: Approval Gate Demo
+description: Demonstrates manual approval gates before sensitive stages
+
+variables:
+  APP_NAME: payment-service
+  DEPLOY_REGION: us-east-1
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME}..."
+          sleep 1
+          echo "Build successful - artifact: ${APP_NAME}:latest"
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: unit-tests
+        run: |
+          echo "Running unit tests..."
+          sleep 1
+          echo "156 tests passed"
+
+      - name: integration-tests
+        run: |
+          echo "Running integration tests..."
+          sleep 1
+          echo "42 integration tests passed"
+
+  - name: deploy-staging
+    needs: [test]
+    steps:
+      - name: deploy
+        run: |
+          echo "Deploying ${APP_NAME} to staging..."
+          sleep 2
+          echo "Staging deployment complete"
+
+  - name: smoke-test
+    needs: [deploy-staging]
+    steps:
+      - name: verify
+        run: |
+          echo "Running smoke tests on staging..."
+          sleep 1
+          echo "All health checks passed"
+
+  - name: deploy-production
+    needs: [smoke-test]
+    approval:
+      required: 1
+      timeout: "1h"
+    steps:
+      - name: deploy
+        run: |
+          echo "Deploying ${APP_NAME} to production (${DEPLOY_REGION})..."
+          sleep 2
+          echo "Production deployment complete"
+
+  - name: verify-production
+    needs: [deploy-production]
+    steps:
+      - name: health-check
+        run: |
+          echo "Verifying production deployment..."
+          sleep 1
+          echo "Production health check passed"

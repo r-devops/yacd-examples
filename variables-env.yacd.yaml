@@ -1,0 +1,54 @@
+name: Variables and Environment
+description: Demonstrates pipeline variables and per-step environment overrides
+
+variables:
+  APP_NAME: config-demo
+  VERSION: "1.5.0"
+  LOG_LEVEL: info
+  REGION: us-west-2
+
+stages:
+  - name: show-config
+    steps:
+      - name: global-vars
+        run: |
+          echo "=== Global Pipeline Variables ==="
+          echo "APP_NAME: ${APP_NAME}"
+          echo "VERSION:  ${VERSION}"
+          echo "REGION:   ${REGION}"
+          echo "LOG_LEVEL: ${LOG_LEVEL}"
+
+      - name: step-env
+        run: |
+          echo "=== Step-Level Environment ==="
+          echo "DATABASE_URL: ${DATABASE_URL}"
+          echo "CACHE_TTL: ${CACHE_TTL}"
+          echo "FEATURE_FLAGS: ${FEATURE_FLAGS}"
+        env:
+          DATABASE_URL: "postgres://localhost:5432/myapp"
+          CACHE_TTL: "3600"
+          FEATURE_FLAGS: "new-ui,dark-mode"
+
+  - name: build
+    needs: [show-config]
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME} v${VERSION} for ${REGION}..."
+          echo "Build flags: -ldflags '-X main.version=${VERSION}'"
+          sleep 1
+          echo "Build complete"
+        env:
+          CGO_ENABLED: "0"
+          GOOS: linux
+          GOARCH: amd64
+
+  - name: deploy
+    needs: [build]
+    steps:
+      - name: push
+        run: |
+          echo "Deploying ${APP_NAME}:${VERSION} to ${REGION}..."
+          echo "Log level: ${LOG_LEVEL}"
+          sleep 1
+          echo "Deployment successful"

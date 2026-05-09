@@ -1,0 +1,106 @@
+name: Microservices CI/CD
+description: Build, test, and deploy multiple microservices with shared dependencies
+
+variables:
+  REGISTRY: ghcr.io/myorg
+  CLUSTER: production
+
+stages:
+  - name: shared-libs
+    steps:
+      - name: build-common
+        run: |
+          echo "Building shared libraries..."
+          sleep 1
+          echo "common-utils v2.3.1 built"
+          echo "proto-definitions compiled"
+
+  - name: auth-service
+    needs: [shared-libs]
+    steps:
+      - name: build
+        run: |
+          echo "Building auth-service..."
+          sleep 1
+          echo "auth-service binary ready"
+      - name: test
+        run: |
+          echo "Testing auth-service..."
+          sleep 1
+          echo "45 tests passed"
+
+  - name: user-service
+    needs: [shared-libs]
+    steps:
+      - name: build
+        run: |
+          echo "Building user-service..."
+          sleep 1
+          echo "user-service binary ready"
+      - name: test
+        run: |
+          echo "Testing user-service..."
+          sleep 1
+          echo "67 tests passed"
+
+  - name: order-service
+    needs: [shared-libs]
+    steps:
+      - name: build
+        run: |
+          echo "Building order-service..."
+          sleep 2
+          echo "order-service binary ready"
+      - name: test
+        run: |
+          echo "Testing order-service..."
+          sleep 1
+          echo "93 tests passed"
+
+  - name: notification-service
+    needs: [shared-libs]
+    steps:
+      - name: build
+        run: |
+          echo "Building notification-service..."
+          sleep 1
+          echo "notification-service binary ready"
+      - name: test
+        run: |
+          echo "Testing notification-service..."
+          sleep 1
+          echo "28 tests passed"
+
+  - name: contract-tests
+    needs: [auth-service, user-service, order-service, notification-service]
+    steps:
+      - name: pact-verify
+        run: |
+          echo "Running Pact contract tests..."
+          sleep 2
+          echo "12 consumer contracts verified"
+          echo "All provider states valid"
+
+  - name: deploy
+    needs: [contract-tests]
+    approval:
+      required: 1
+      timeout: "30m"
+    steps:
+      - name: deploy-all
+        run: |
+          echo "Deploying to ${CLUSTER}..."
+          echo "  auth-service: rolling update"
+          echo "  user-service: rolling update"
+          echo "  order-service: rolling update"
+          echo "  notification-service: rolling update"
+          sleep 3
+          echo "All services deployed successfully"
+
+finally:
+  - name: cleanup
+    steps:
+      - name: remove-temp
+        run: |
+          echo "Cleaning up temporary build artifacts..."
+          echo "Cleanup complete"

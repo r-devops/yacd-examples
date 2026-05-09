@@ -1,0 +1,109 @@
+name: Multi-Environment Deploy
+description: Progressive deployment through dev, staging, and production with approvals
+trigger_mode: manual
+
+inputs:
+  version:
+    type: string
+    description: Application version to deploy
+    required: true
+    default: "latest"
+
+  skip_tests:
+    type: boolean
+    description: Skip integration tests (emergency deploys only)
+    default: false
+
+  environment:
+    type: choice
+    description: Target environment (or 'all' for full promotion)
+    default: all
+    options:
+      - dev
+      - staging
+      - production
+      - all
+
+variables:
+  APP_NAME: order-service
+  DOCKER_REGISTRY: registry.example.com
+
+stages:
+  - name: validate
+    steps:
+      - name: check-image
+        run: |
+          echo "Validating image ${DOCKER_REGISTRY}/${APP_NAME}:${version}..."
+          sleep 1
+          echo "Image exists and is signed"
+
+  - name: deploy-dev
+    needs: [validate]
+    steps:
+      - name: deploy
+        run: |
+          echo "Deploying ${APP_NAME}:${version} to dev..."
+          sleep 2
+          echo "Dev deployment complete"
+
+      - name: smoke-test
+        run: |
+          echo "Running dev smoke tests..."
+          sleep 1
+          echo "Dev smoke tests passed"
+
+  - name: integration-tests
+    needs: [deploy-dev]
+    steps:
+      - name: api-tests
+        run: |
+          if [ "${skip_tests}" = "true" ]; then
+            echo "SKIPPING integration tests (emergency deploy)"
+          else
+            echo "Running API integration tests against dev..."
+            sleep 3
+            echo "87 API tests passed"
+          fi
+
+  - name: deploy-staging
+    needs: [integration-tests]
+    steps:
+      - name: deploy
+        run: |
+          echo "Deploying ${APP_NAME}:${version} to staging..."
+          sleep 2
+          echo "Staging deployment complete"
+
+      - name: e2e-tests
+        run: |
+          echo "Running E2E tests on staging..."
+          sleep 2
+          echo "E2E suite passed (34 scenarios)"
+
+  - name: deploy-production
+    needs: [deploy-staging]
+    approval:
+      required: 1
+      timeout: "2h"
+    steps:
+      - name: canary
+        run: |
+          echo "Starting canary deployment (10% traffic)..."
+          sleep 2
+          echo "Canary metrics healthy"
+
+      - name: full-rollout
+        run: |
+          echo "Rolling out to 100% traffic..."
+          sleep 2
+          echo "Production rollout complete"
+
+  - name: post-deploy
+    needs: [deploy-production]
+    steps:
+      - name: verify
+        run: |
+          echo "Running post-deploy verification..."
+          sleep 1
+          echo "All health checks green"
+          echo "Version ${version} is live in production"
