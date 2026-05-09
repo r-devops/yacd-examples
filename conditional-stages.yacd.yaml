@@ -1,0 +1,52 @@
+name: conditional-deploy
+description: Demonstrates conditional stage execution with 'when' expressions
+
+variables:
+  APP_NAME: my-app
+  DEPLOY_ENV: production
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "::group::Installing dependencies"
+          echo "npm install..."
+          echo "::endgroup::"
+          echo "::group::Building application"
+          echo "Building ${APP_NAME}..."
+          echo "Build complete."
+          echo "::endgroup::"
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: unit-tests
+        run: |
+          echo "::group::Running unit tests"
+          echo "Running 42 tests..."
+          echo "All tests passed."
+          echo "::endgroup::"
+
+  # Only deploy to production when DEPLOY_ENV is "production"
+  - name: deploy-prod
+    needs: [test]
+    when: DEPLOY_ENV == production
+    steps:
+      - name: deploy
+        run: echo "Deploying ${APP_NAME} to PRODUCTION..."
+
+  # Deploy to staging when DEPLOY_ENV is "staging"
+  - name: deploy-staging
+    needs: [test]
+    when: DEPLOY_ENV == staging
+    steps:
+      - name: deploy
+        run: echo "Deploying ${APP_NAME} to STAGING..."
+
+  # Cleanup always runs (no 'when' condition)
+  - name: cleanup
+    needs: [deploy-prod, deploy-staging]
+    steps:
+      - name: cleanup-artifacts
+        run: echo "Cleaning up temporary build artifacts..."

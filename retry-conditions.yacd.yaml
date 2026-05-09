@@ -1,0 +1,39 @@
+name: retry-demo
+description: Demonstrates retry with conditions, backoff strategies, and exit code filtering
+
+variables:
+  API_URL: https://api.example.com
+
+stages:
+  - name: deploy
+    steps:
+      # Retry on any failure with exponential backoff
+      - name: deploy-service
+        run: |
+          echo "Deploying service..."
+          echo "Deployment complete."
+        retry:
+          max: 3
+          delay: 5s
+          backoff: exponential   # 5s, 10s, 20s
+
+      # Only retry on specific exit codes (e.g., 1=transient, 2=rate-limit)
+      - name: api-health-check
+        run: |
+          echo "Checking API health..."
+          curl -sf ${API_URL}/health || exit 1
+        retry:
+          max: 5
+          delay: 2s
+          backoff: linear        # 2s, 4s, 6s, 8s, 10s
+          on_exit_codes: [1, 2]  # Only retry on these codes
+
+      # Never retry on exit code 42 (permanent failure)
+      - name: database-migration
+        run: |
+          echo "Running database migration..."
+          echo "Migration complete."
+        retry:
+          max: 3
+          delay: 10s
+          not_exit_codes: [42]   # Don't retry on code 42 (schema conflict)

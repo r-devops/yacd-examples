@@ -1,0 +1,65 @@
+name: deploy-with-cleanup
+description: Demonstrates 'finally' stages and 'post' hooks for guaranteed cleanup
+
+variables:
+  APP_NAME: web-service
+  NOTIFY_CHANNEL: "#deployments"
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME}..."
+          mkdir -p dist
+          echo "binary" > dist/app
+          echo "Build complete."
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: integration-tests
+        run: |
+          echo "Running integration tests..."
+          echo "All 15 tests passed."
+
+  - name: deploy
+    needs: [test]
+    steps:
+      - name: deploy-to-k8s
+        run: |
+          echo "Deploying ${APP_NAME} to Kubernetes..."
+          echo "Deployment successful."
+
+# 'finally' stages ALWAYS run after main stages complete (even on failure).
+# Use for cleanup tasks like releasing resources or tearing down test environments.
+finally:
+  - name: cleanup
+    steps:
+      - name: cleanup-resources
+        run: |
+          echo "Cleaning up temporary resources..."
+          echo "Removed build artifacts."
+          echo "Released test database locks."
+
+# 'post' hooks run after all stages + finally stages complete.
+post:
+  always:
+    - name: audit-log
+      run: echo "Pipeline finished. Status=${YACD_RUN_STATUS}"
+
+  on_success:
+    - name: success-notification
+      plugin: yacd/slack-notify:v1
+      with:
+        channel: "${NOTIFY_CHANNEL}"
+        message: "${APP_NAME} deployed successfully"
+        color: "good"
+
+  on_failure:
+    - name: failure-alert
+      plugin: yacd/slack-notify:v1
+      with:
+        channel: "${NOTIFY_CHANNEL}"
+        message: "${APP_NAME} deployment FAILED"
+        color: "danger"
