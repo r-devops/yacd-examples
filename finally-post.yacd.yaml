@@ -1,5 +1,5 @@
-name: deploy-with-cleanup
-description: Demonstrates 'finally' stages and 'post' hooks for guaranteed cleanup
+name: deploy-with-hooks
+description: Demonstrates service containers, 'finally' stages, and 'post' hooks
 
 variables:
   APP_NAME: web-service
@@ -11,42 +11,62 @@ stages:
       - name: compile
         run: |
           echo "Building ${APP_NAME}..."
-          mkdir -p dist
-          echo "binary" > dist/app
-          echo "Build complete."
+          sleep 1
+          echo "Build complete"
 
   - name: test
     needs: [build]
+    # Service containers are started automatically before the stage runs
+    # and torn down automatically after the stage completes (success or failure).
+    services:
+      - name: test-db
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - "5433:5432"
+      - name: test-redis
+        image: redis:7-alpine
+        ports:
+          - "6380:6379"
     steps:
       - name: integration-tests
         run: |
           echo "Running integration tests..."
-          echo "All 15 tests passed."
+          echo "Connected to test-db on port 5433"
+          echo "Connected to test-redis on port 6380"
+          sleep 2
+          echo "All 42 tests passed"
+        env:
+          DATABASE_URL: "postgres://test:test@host.docker.internal:5433/testdb"
+          REDIS_URL: "redis://host.docker.internal:6380"
 
   - name: deploy
     needs: [test]
     steps:
       - name: deploy-to-k8s
         run: |
-          echo "Deploying ${APP_NAME} to Kubernetes..."
-          echo "Deployment successful."
+          echo "Deploying ${APP_NAME}..."
+          sleep 1
+          echo "Deployment successful"
 
-# 'finally' stages ALWAYS run after main stages complete (even on failure).
-# Use for cleanup tasks like releasing resources or tearing down test environments.
+# 'finally' stages ALWAYS run after main stages (even on failure).
+# Unlike service containers (which are per-stage), finally stages are
+# for pipeline-level teardown like releasing shared locks or notifying.
 finally:
-  - name: cleanup
+  - name: release-lock
     steps:
-      - name: cleanup-resources
-        run: |
-          echo "Cleaning up temporary resources..."
-          echo "Removed build artifacts."
-          echo "Released test database locks."
+      - name: unlock
+        run: echo "Released deployment lock for ${APP_NAME}"
 
-# 'post' hooks run after all stages + finally stages complete.
+# 'post' hooks run after all stages + finally stages.
+# YACD_RUN_STATUS is injected automatically (success/failed/cancelled).
 post:
   always:
     - name: audit-log
-      run: echo "Pipeline finished. Status=${YACD_RUN_STATUS}"
+      run: echo "Pipeline finished with status=${YACD_RUN_STATUS}"
 
   on_success:
     - name: success-notification
