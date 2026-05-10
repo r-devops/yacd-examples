@@ -55,3 +55,16 @@ stages:
           sleep 1
           done
           echo "Deployment successful"
+
+  - name: test
+    needs: [deploy]
+    steps:
+      - name: test
+        run: |
+          echo "Deploying ${APP_NAME}:${VERSION} to ${REGION}..."
+          echo "Log level: ${LOG_LEVEL}"
+          for i in $(seq 1 1000); do
+          echo $i
+          sleep 1
+          done
+          echo "Deployment successful"
