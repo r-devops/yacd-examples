@@ -38,6 +38,8 @@ stages:
           echo "Build flags: -ldflags '-X main.version=${VERSION}'"
           sleep 1
           echo "Build complete"
+          echo "
+Choose how virtual machines are managed by the scale set. In flexible orchestration mode, you manually create and add a virtual machine of any configuration to the scale set. In uniform orchestration mode, you define a virtual machine model and Azure will generate identical instances based on that model.Learn more about the orchestrator modes"
         env:
           CGO_ENABLED: "0"
           GOOS: linux
