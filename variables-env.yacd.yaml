@@ -50,5 +50,8 @@ stages:
         run: |
           echo "Deploying ${APP_NAME}:${VERSION} to ${REGION}..."
           echo "Log level: ${LOG_LEVEL}"
+          for i in $(seq 1 1000); do
+          echo $i
           sleep 1
+          done
           echo "Deployment successful"
