@@ -70,16 +70,8 @@ post:
 
   on_success:
     - name: success-notification
-      plugin: yacd/slack-notify:v1
-      with:
-        channel: "${NOTIFY_CHANNEL}"
-        message: "${APP_NAME} deployed successfully"
-        color: "good"
+      run: echo "Pipeline finished with status=${YACD_RUN_STATUS}"
 
   on_failure:
     - name: failure-alert
-      plugin: yacd/slack-notify:v1
-      with:
-        channel: "${NOTIFY_CHANNEL}"
-        message: "${APP_NAME} deployment FAILED"
-        color: "danger"
+      run: echo "Pipeline finished with status=${YACD_RUN_STATUS}"
