@@ -1,0 +1,44 @@
+name: Multi-Agent Label Routing
+description: |
+  Demonstrates per-stage `runs_on.labels` overrides. The build stage requires
+  agents labelled `linux,docker`; the gpu-test stage requires `gpu,cuda12`.
+  When you have a heterogeneous fleet, each stage lands on a matching agent
+  even within a single run.
+
+# Pipeline-level runs_on is the default for any stage that doesn't override it.
+runs_on:
+  labels: [linux]
+
+inputs:
+  app:
+    type: string
+    default: "demo-app"
+
+stages:
+  - name: lint
+    # Inherits pipeline-level labels: [linux]
+    steps:
+      - name: golangci-lint
+        run: |
+          echo "Linting ${app} on a generic linux agent"
+          sleep 1
+
+  - name: build
+    needs: [lint]
+    runs_on:
+      labels: [linux, docker]   # Needs docker for image build
+    steps:
+      - name: build-image
+        run: |
+          echo "Build runs on an agent with [linux,docker] labels"
+          sleep 1
+
+  - name: gpu-test
+    needs: [build]
+    runs_on:
+      labels: [gpu, cuda12]     # Different agent class entirely
+    steps:
+      - name: inference-bench
+        run: |
+          echo "GPU benchmark runs on a [gpu,cuda12] agent"
+          sleep 1

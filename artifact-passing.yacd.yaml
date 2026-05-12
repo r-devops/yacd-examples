@@ -1,0 +1,51 @@
+name: Artifact Passing Between Stages
+description: |
+  Producer stage writes files; consumer downloads them on a (possibly different)
+  agent before its steps run. The contract:
+
+    * Producer declares `artifacts.paths` — paths (files or directories,
+      relative to the workspace) that will be uploaded on success.
+    * Consumer declares `needs_artifacts: [producer_name]` — those files are
+      downloaded into the workspace before steps execute.
+    * The consumer's name must also appear in `needs:` (the validator enforces
+      this — artifact dependency is a stricter form of ordering dependency).
+
+  In the UI, the producer stage shows an emerald "N art" pill on its DAG node
+  and an Artifacts panel listing each file with its size, sha256, and a
+  download link.
+
+stages:
+  - name: build
+    artifacts:
+      paths:
+        - out/         # Recursive: every file under out/ is uploaded
+    steps:
+      - name: produce-binary
+        run: |
+          mkdir -p out
+          echo "compiled binary $(date -u +%s)" > out/app.bin
+          echo "release notes" > out/RELEASE.md
+          ls -la out/
+
+  - name: test
+    needs: [build]
+    needs_artifacts: [build]   # Downloads everything build uploaded
+    steps:
+      - name: verify
+        run: |
+          echo "Files received from build:"
+          ls -la out/
+          test -f out/app.bin && echo "binary present"
+          test -f out/RELEASE.md && echo "release notes present"
+
+  - name: package
+    needs: [test, build]       # build listed even though we transitively depend on it via test —
+                               # needs_artifacts requires a direct entry in needs (validator enforces).
+    needs_artifacts: [build]
+    steps:
+      - name: tar-it
+        run: |
+          echo "Packaging $(cat out/app.bin)"
+          # In a real pipeline you'd `tar czf release.tar.gz out/` and declare
+          # release.tar.gz as this stage's artifact, then the deploy stage
+          # would `needs_artifacts: [package]`.

@@ -1,0 +1,41 @@
+name: Workspace Reuse (Sticky Agent)
+description: |
+  `reuse_workspace: true` is a hint to the scheduler: "prefer the same agent
+  that ran one of my `needs[]` stages so the on-disk workspace from that stage
+  is still there." Use this for fast iterations (large repo checkouts,
+  package caches, etc.) where round-tripping artifacts through MinIO would
+  be wasteful.
+
+  Important properties:
+    * It's a HINT, not a guarantee. If the previous agent is offline, at
+      capacity, or doesn't match this stage's labels, the scheduler logs a
+      WARN and falls back to picking a fresh agent via the normal scoring.
+    * After fallback, the workspace will be empty on the new agent. If you
+      need files even on fallback, declare `artifacts` + `needs_artifacts`
+      in addition — the two features compose.
+    * The UI shows a purple "reused" pill on the DAG node of any stage that
+      had `reuse_workspace: true`.
+
+stages:
+  - name: checkout
+    steps:
+      - name: clone
+        run: |
+          mkdir -p src
+          echo "imagine a 2 GB git repo" > src/source.txt
+
+  - name: lint
+    needs: [checkout]
+    reuse_workspace: true   # Cheap: stay on the agent that has the checkout
+    steps:
+      - name: golangci
+        run: |
+          test -f src/source.txt && echo "workspace reused — no re-clone needed"
+
+  - name: build
+    needs: [lint]
+    reuse_workspace: true
+    steps:
+      - name: compile
+        run: |
+          test -f src/source.txt && echo "still on the same agent"
