@@ -89,3 +89,5 @@ stages:
           echo "Generating coverage report..."
           sleep 1
           echo "Coverage: 87.3%"
+
+# auto-trigger e2e test marker — 2026-05-12T12:44:20Z
