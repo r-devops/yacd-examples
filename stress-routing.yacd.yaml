@@ -1,0 +1,62 @@
+name: Edge Routing Stress Test
+description: |
+  Deliberately built to stress orthogonal edge routing. Includes every pattern
+  that historically caused edges to cross unrelated node bodies:
+    - 5-way fan-out from a single root
+    - Multi-rank skip edges (rank 1 → rank 4)
+    - Fan-in to a single node from multiple ranks
+    - Asymmetric layer widths (rank 2 has 3 nodes, rank 3 has 2, rank 4 has 1)
+  If any arrow visually passes through an unrelated stage card after this
+  runs, ELK's orthogonal routing isn't actually being honoured.
+
+stages:
+  - name: kickoff
+    steps:
+      - name: clone
+        run: echo kickoff
+
+  # Rank 1: 5-way fan out
+  - name: lint
+    needs: [kickoff]
+    steps: [{ name: do, run: echo lint }]
+  - name: unit-tests
+    needs: [kickoff]
+    steps: [{ name: do, run: echo unit }]
+  - name: security-scan
+    needs: [kickoff]
+    steps: [{ name: do, run: echo scan }]
+  - name: typecheck
+    needs: [kickoff]
+    steps: [{ name: do, run: echo tc }]
+  - name: dep-audit
+    needs: [kickoff]
+    steps: [{ name: do, run: echo dep }]
+
+  # Rank 2: fan-in/fan-out mix
+  - name: build-frontend
+    needs: [lint, unit-tests]
+    steps: [{ name: do, run: echo bf }]
+  - name: build-backend
+    needs: [lint, typecheck]
+    steps: [{ name: do, run: echo bb }]
+  - name: integration-tests
+    needs: [unit-tests, dep-audit]
+    steps: [{ name: do, run: echo it }]
+
+  # Rank 3: more convergence
+  - name: package
+    needs: [build-frontend, build-backend]
+    steps: [{ name: do, run: echo pkg }]
+  - name: smoke
+    needs: [build-frontend, integration-tests]
+    steps: [{ name: do, run: echo smoke }]
+
+  # Rank 4: hard case — depends on a rank-3 AND a rank-1 stage (skip 2)
+  - name: deploy-canary
+    needs: [package, security-scan]
+    steps: [{ name: do, run: echo canary }]
+
+  # Rank 5: fan-in from rank 4 AND skips across to rank 3
+  - name: full-rollout
+    needs: [deploy-canary, smoke]
+    steps: [{ name: do, run: echo rollout }]
