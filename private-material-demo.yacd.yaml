@@ -1,0 +1,40 @@
+name: Private Material Demo
+description: |
+  Demonstrates the credentials store (invariant #41 / Round B.3a).
+  This pipeline references a private git repo via a named credential
+  managed in YACD's Credentials store. The credential lives in the
+  database (encrypted with AES-256-GCM) and is referenced from YAML
+  by NAME — never by value.
+
+  Before triggering this pipeline:
+  1. Create a credential in the UI (Credentials → Add Credential):
+     - Name: private-repo-ro    (must match `credentials:` below)
+     - Username: <your-git-username>
+     - Password: <a Personal Access Token with read scope>
+  2. Replace `<your-private-repo>` below with your own private repo URL.
+
+trigger_mode: manual
+
+materials:
+  - name: app
+    git: https://github.com/<your-org>/<your-private-repo>.git
+    branch: main
+    credentials: private-repo-ro   # ← references Credentials store by name
+    triggers_pipeline: true
+
+stages:
+  - name: inspect
+    runs_on:
+      labels: [linux, docker]
+    steps:
+      - name: show-files
+        run: |
+          echo "=== Workspace ==="
+          ls -la
+          echo ""
+          echo "=== app/ contents (first 20 entries) ==="
+          ls app/ | head -20
+          echo ""
+          echo "=== Latest commit ==="
+          git -C app log -1 --pretty=oneline 2>&1 | head -3
+        container_image: alpine/git:latest
