@@ -1,0 +1,55 @@
+name: Multi-Material Demo
+description: |
+  Demonstrates the materials feature (invariant #40, Round B.1).
+  This pipeline clones an additional public repo alongside the
+  yacd-examples repo where the pipeline.yaml lives. Stages
+  cd into each material's named subdir to operate on its files.
+
+# trigger_mode auto = picks up pushes to materials with
+# triggers_pipeline: true. Set to manual to require explicit /trigger.
+trigger_mode: auto
+
+# B.1 feature: additional repos cloned per run, into named subdirs.
+# Backwards compat: pipelines without `materials:` continue to work as
+# before (the pipeline_group's repo is NOT auto-cloned by the agent —
+# steps that need it have to clone themselves, same as before).
+materials:
+  - name: docs
+    git: https://github.com/r-devops/yacd-examples.git
+    branch: main
+    # Default false — a push to this material does NOT auto-trigger
+    # the pipeline. Set to true on the primary repo whose changes
+    # should drive the pipeline.
+    triggers_pipeline: true
+  - name: readme_src
+    git: https://github.com/git/git.git
+    branch: master
+    triggers_pipeline: false # shared / library material — opt-out of auto trigger
+
+stages:
+  - name: list-workspace
+    runs_on:
+      labels: [linux, docker]
+    steps:
+      - name: show-tree
+        run: |
+          echo "=== Workspace contents (multi-material layout) ==="
+          ls -la
+          echo ""
+          echo "=== docs/ material ==="
+          ls docs/ | head -20
+          echo ""
+          echo "=== readme_src/ material (first README line) ==="
+          head -1 readme_src/README.md || head -1 readme_src/README || echo "(no README found)"
+        container_image: alpine:3.20
+
+  - name: count-files
+    needs: [list-workspace]
+    runs_on:
+      labels: [linux, docker]
+    steps:
+      - name: counts
+        run: |
+          echo "files in docs/:        $(find docs -type f | wc -l)"
+          echo "files in readme_src/:  $(find readme_src -type f | wc -l)"
+        container_image: alpine:3.20
