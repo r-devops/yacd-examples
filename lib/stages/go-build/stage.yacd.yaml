@@ -1,0 +1,37 @@
+name: go-build
+description: |
+  Reusable Go build + test stage. Demonstrates invariant #113 stage
+  templates. The caller pins the Go version and module path via params;
+  this stage runs the standard build / vet / test sequence inside the
+  matching golang container.
+
+inputs:
+  go_version:
+    type: string
+    description: Go toolchain version (matches the official golang image tag).
+    default: "1.22"
+  module_path:
+    type: string
+    description: Path to the Go module relative to the workspace.
+    default: "."
+
+steps:
+  - name: deps
+    run: |
+      cd ${library.param.module_path}
+      go mod download
+
+  - name: vet
+    run: |
+      cd ${library.param.module_path}
+      go vet ./...
+
+  - name: build
+    run: |
+      cd ${library.param.module_path}
+      go build ./...
+
+  - name: test
+    run: |
+      cd ${library.param.module_path}
+      go test -race -coverprofile=coverage.out ./...

@@ -1,0 +1,48 @@
+name: Shared Libraries Demo
+description: |
+  Exercises every part of invariant #113: stage templates (use:), step
+  actions (uses:), library params via call-site params:, library outputs
+  consumed as bare env vars, and the scoped-variable syntax
+  ${project.var.X} / ${project.secret.X} / ${pipeline.var.X}.
+
+  Two reusable units in the lib/ subtree of this same repo are referenced
+  via the `yacd-examples` library alias (registered at project level under
+  Project Settings → Library References).
+
+concurrency:
+  parallel: always
+
+variables:
+  APP_NAME: shared-libs-demo
+  DEPLOY_ENV: staging
+
+stages:
+  # Stage template: reusable Go build + test.
+  - name: ci
+    use: yacd-examples@main/lib/stages/go-build
+    params:
+      go_version: "1.22"
+      module_path: ./service
+
+  # Step action with output: uploads coverage and emits ${coverage_url}
+  # consumed by the next stage.
+  - name: coverage
+    needs: [ci]
+    steps:
+      - name: send
+        uses: yacd-examples@main/lib/actions/upload-coverage
+        params:
+          path: ./service/coverage.out
+          service: codecov
+
+  # Downstream step consumes the action's output. The agent injects
+  # ${coverage_url} as a bare env var (invariant #113 output flow).
+  - name: notify
+    needs: [coverage]
+    steps:
+      - name: announce
+        run: |
+          echo "Build complete for ${pipeline.var.APP_NAME}"
+          echo "Target environment: ${pipeline.var.DEPLOY_ENV}"
+          echo "Coverage report at: ${coverage_url}"
+          echo "Uploaded via: ${coverage_service}"

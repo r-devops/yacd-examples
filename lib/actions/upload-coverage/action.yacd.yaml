@@ -1,0 +1,40 @@
+name: upload-coverage
+description: |
+  Uploads a coverage report and emits the resulting download URL as a step
+  output. Demonstrates invariant #113 step actions with typed params and
+  outputs.
+
+  Inputs are referenced inside the action body as ${library.param.NAME}.
+  Outputs are written to $YACD_OUTPUT_FILE as key=value lines; downstream
+  steps consume them as bare ${KEY} env vars.
+
+inputs:
+  path:
+    type: string
+    description: Path to the coverage file relative to the workspace.
+    required: true
+  service:
+    type: choice
+    description: Coverage service to upload to.
+    options: [codecov, coveralls]
+    default: codecov
+
+steps:
+  - name: validate-input
+    run: |
+      if [ ! -f "${library.param.path}" ]; then
+        echo "coverage file ${library.param.path} not found"
+        exit 1
+      fi
+      echo "Found coverage file at ${library.param.path}"
+
+  - name: upload
+    run: |
+      echo "Uploading ${library.param.path} to ${library.param.service}..."
+      # Real action would POST to the service; we simulate and emit a URL.
+      FAKE_URL="https://${library.param.service}.example/reports/$(date +%s).html"
+      sleep 1
+      echo "Uploaded — report URL: $FAKE_URL"
+      # Emit output for downstream consumption.
+      echo "coverage_url=$FAKE_URL" >> "$YACD_OUTPUT_FILE"
+      echo "coverage_service=${library.param.service}" >> "$YACD_OUTPUT_FILE"
