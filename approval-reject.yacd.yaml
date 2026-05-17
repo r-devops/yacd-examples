@@ -1,0 +1,56 @@
+name: Approval Reject Demo
+description: |
+  Exercises the approval-rejection cascade. When a reviewer rejects the
+  qa-gate stage, the entire run is terminated: the rejected stage is marked
+  failed, downstream stages are skipped, and the run finishes as 'cancelled'.
+  Use this to manually regression-check the reject path after server changes.
+
+variables:
+  APP_NAME: reject-demo
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "Building ${APP_NAME}..."
+          sleep 2
+          echo "Build complete."
+
+  - name: qa-gate
+    needs: [build]
+    approval:
+      required: 1
+      allowed_users:
+        - admin@yacd.local
+    steps:
+      - name: hold
+        run: echo "Awaiting approval — reject this run to verify the cascade."
+
+  - name: deploy
+    needs: [qa-gate]
+    steps:
+      - name: ship
+        run: |
+          echo "Deploying ${APP_NAME}..."
+          sleep 1
+          echo "If this stage runs, you APPROVED the gate."
+
+  - name: post-deploy-verify
+    needs: [deploy]
+    steps:
+      - name: smoke
+        run: |
+          echo "Running smoke tests against ${APP_NAME}..."
+          sleep 1
+          echo "All good."
+
+# Expected behaviour on REJECT:
+#   - build         → success
+#   - qa-gate       → failed   (the rejection point)
+#   - deploy        → skipped
+#   - post-deploy-verify → skipped
+#   - run           → cancelled
+#   - error_message → "approval rejected by <user> for stage qa-gate: <comment>"
+# Expected behaviour on APPROVE:
+#   - all four stages run to success
