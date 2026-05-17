@@ -1,0 +1,51 @@
+name: Concurrency Approval-Aware Demo
+description: |
+  Demonstrates `concurrency.parallel: when_waiting_approval`. Runs are
+  serialized by default, BUT if the in-flight predecessor is currently
+  waiting on a human approval (one of its stages is in status='waiting'),
+  the next queued run is allowed to dispatch. This avoids the situation
+  where a pending human action blocks every subsequent run.
+
+  Once the predecessor's approval is granted, both runs continue in
+  parallel — we do not retroactively pause the successor (see invariant
+  #112's Q3 rule).
+
+concurrency:
+  parallel: when_waiting_approval
+
+stages:
+  - name: prep
+    steps:
+      - name: p
+        run: |
+          echo "Preparing for human review..."
+          sleep 2
+
+  - name: human-gate
+    needs: [prep]
+    approval:
+      required: 1
+      allowed_users:
+        - admin@yacd.local
+    steps:
+      - name: hold
+        run: echo "Awaiting approval — predecessors release their lock here."
+
+  - name: deploy
+    needs: [human-gate]
+    steps:
+      - name: ship
+        run: |
+          echo "Deploying..."
+          sleep 4
+          echo "Deployed."
+
+# Expected behaviour:
+#   Trigger 3 times in 1 second:
+#     - run #1 dispatches, runs `prep`, then hits the approval gate.
+#       Now its `human-gate` stage is in status='waiting'.
+#     - run #2 sees the predecessor is approval-waiting → DISPATCHES (no lock).
+#     - run #3 likewise.
+#   Approve #1's gate. All three runs continue toward their deploy stages,
+#   potentially in parallel. The window during which #1 was paused on
+#   approval is what gave #2 and #3 permission to start.

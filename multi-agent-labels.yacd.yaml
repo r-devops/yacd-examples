@@ -14,6 +14,11 @@ inputs:
     type: string
     default: "demo-app"
 
+# Invariant #112: this pipeline benefits from parallel runs across
+# multiple commits — preserve that explicitly now that serial is the default.
+concurrency:
+  parallel: always
+
 stages:
   - name: lint
     # Inherits pipeline-level labels: [linux]

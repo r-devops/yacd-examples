@@ -1,6 +1,11 @@
 name: Complex DAG
 description: Diamond dependency pattern with multiple convergence points
 
+# Invariant #112: this pipeline benefits from parallel runs across
+# multiple commits — preserve that explicitly now that serial is the default.
+concurrency:
+  parallel: always
+
 stages:
   - name: init
     steps:

@@ -1,0 +1,38 @@
+name: Concurrency Serial Demo
+description: |
+  Demonstrates the default `concurrency.parallel: never` mode. Triggering this
+  pipeline multiple times in quick succession will queue the second and third
+  runs behind the first — only one in-flight run at a time. Useful for
+  deploys, database migrations, or any workflow targeting a shared resource.
+
+  Note: omitting the `concurrency:` block entirely produces the same result —
+  serial is the default since invariant #112 shipped.
+
+concurrency:
+  parallel: never
+
+stages:
+  - name: prepare
+    steps:
+      - name: stage
+        run: |
+          echo "Preparing release..."
+          sleep 5
+          echo "Prepared."
+
+  - name: deploy
+    needs: [prepare]
+    steps:
+      - name: ship
+        run: |
+          echo "Deploying — only one of these can run at a time."
+          sleep 5
+          echo "Deployed."
+
+# Expected behaviour:
+#   Trigger 3 times in 1 second:
+#     - run #1 runs immediately
+#     - run #2 stays queued, UI shows "⏸ waiting for #1"
+#     - run #3 stays queued, UI shows "⏸ waiting for #1" (or #2)
+#   After #1 finishes, #2 dispatches automatically.
+#   After #2 finishes, #3 dispatches automatically.

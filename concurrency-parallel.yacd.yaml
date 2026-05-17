@@ -1,0 +1,35 @@
+name: Concurrency Parallel Demo
+description: |
+  Opts in to parallel triggers. Use this for build/test pipelines where
+  running multiple commits at once is desirable — faster CI feedback for
+  PR pushes, no contention on shared resources.
+
+  The `parallel: always` setting disables the default serial lock for this
+  pipeline. Other pipelines in the same project remain serial by default.
+
+concurrency:
+  parallel: always
+
+stages:
+  - name: build
+    steps:
+      - name: compile
+        run: |
+          echo "Building $(date)..."
+          sleep 4
+          echo "Built."
+
+  - name: test
+    needs: [build]
+    steps:
+      - name: unit
+        run: |
+          echo "Running tests $(date)..."
+          sleep 3
+          echo "Tests passed."
+
+# Expected behaviour:
+#   Trigger 3 times in 1 second:
+#     - All 3 dispatch immediately
+#     - All 3 run their stages in parallel
+#     - No "⏸ waiting" chip on any of them
