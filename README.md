@@ -2,6 +2,10 @@
 
 Example pipeline YAML files for [YACD](https://github.com/r-devops/yacd) (Yet Another CD).
 
+> **Full schema reference:** every YAML option supported by YACD is documented at
+> [`docs/pipeline-reference.md`](https://github.com/r-devops/yacd/blob/main/docs/pipeline-reference.md) in the main repo.
+> The examples here are recipes; the reference doc is the spec.
+
 ## Examples
 
 | File | Description |
