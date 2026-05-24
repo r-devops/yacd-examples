@@ -42,7 +42,7 @@ materials:
   # `category: material` on the credential is enforced server-side —
   # an env-category credential will be REFUSED here, and vice versa.
   - name: app
-    git: https://github.com/<your-org>/<your-private-repo>.git
+    git: https://github.com/r-devops/yacd-examples.git
     branch: main
     credentials: private-repo-ro
     # `triggers_pipeline: false` is intentional: a push to a private
