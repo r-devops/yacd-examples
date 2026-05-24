@@ -1,0 +1,20 @@
+name: Streaming Demo
+description: |
+  Prints 10 lines with 1-second sleeps. Demonstrates live log streaming
+  end-to-end: agent stdout -> NATS logs.<run_id>.<step_id> -> server
+  LogStreamer + WSHub -> UI WebSocket log:line events. If you see lines
+  appear one at a time in the UI, streaming is working. If they only
+  appear after the run finishes / you refresh, the prefix-mismatch bug
+  is back.
+
+trigger_mode: manual
+
+stages:
+  - name: stream
+    steps:
+      - name: print-slow
+        run: |
+          for i in $(seq 1 10); do
+            echo "line $i at $(date -Iseconds)"
+            sleep 1
+          done
