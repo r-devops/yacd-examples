@@ -1,0 +1,84 @@
+name: Multi-Material With Auth Demo
+description: |
+  Two materials cloned in one run: one PUBLIC and one PRIVATE. The
+  private one resolves its credential by name from the Credentials
+  store (invariant #41). Shows the full surface of the materials
+  feature in a single file:
+    - multiple materials in one pipeline
+    - each landing in its own named subdir of the workspace
+    - per-material branch override
+    - per-material credentials reference (only for the private one)
+    - per-material triggers_pipeline toggle
+
+  This file is named `.yacd.yaml.example` so the syncer skips it on a
+  fresh deploy — referencing a credential that does not exist would
+  emit a WARN on every git sync. To USE this example:
+    1. In the UI: Credentials -> Add Credential
+       - Name:     private-repo-ro     (must match `credentials:` below)
+       - Category: material
+       - Username: <your-git-username>
+       - Password: <a Personal Access Token with read scope>
+    2. Replace `<your-org>/<your-private-repo>` with your own private repo URL.
+    3. Rename this file to `multi-material-with-auth.yacd.yaml` (drop
+       the `.example`) so the syncer picks it up.
+    4. Push to your yacd-examples fork OR commit to whichever repo your
+       pipeline_group points at.
+
+trigger_mode: auto
+
+materials:
+  # PUBLIC material — no credentials needed. Pattern is identical to the
+  # single-material case; just add more entries to scale to N.
+  - name: docs
+    git: https://github.com/r-devops/yacd-examples.git
+    branch: main
+    triggers_pipeline: true
+
+  # PRIVATE material — references a credential by name. The credential
+  # value never appears in YAML; the agent fetches the encrypted blob
+  # from the Credentials store at clone time and uses it for ONE
+  # `git clone` then discards it (invariant #41, "zero secret leak").
+  #
+  # `category: material` on the credential is enforced server-side —
+  # an env-category credential will be REFUSED here, and vice versa.
+  - name: app
+    git: https://github.com/<your-org>/<your-private-repo>.git
+    branch: main
+    credentials: private-repo-ro
+    # `triggers_pipeline: false` is intentional: a push to a private
+    # source repo SHOULDN'T fire the pipeline if `docs` (the canonical
+    # driver) hasn't changed. Flip to true if your private repo IS the
+    # driver and `docs` is just a shared resource.
+    triggers_pipeline: false
+
+stages:
+  - name: inspect-both
+    runs_on:
+      labels: [linux, docker]
+    steps:
+      - name: show-layout
+        run: |
+          echo "=== Workspace layout (two materials side by side) ==="
+          ls -la
+          echo
+          echo "=== docs/  (public) ==="
+          ls docs/ | head -10
+          echo "  latest commit:"
+          git -C docs log -1 --pretty=oneline 2>&1 | head -1
+          echo
+          echo "=== app/   (private, via credential 'private-repo-ro') ==="
+          ls app/ | head -10
+          echo "  latest commit:"
+          git -C app log -1 --pretty=oneline 2>&1 | head -1
+        container_image: alpine/git:latest
+
+  - name: count-files
+    needs: [inspect-both]
+    runs_on:
+      labels: [linux, docker]
+    steps:
+      - name: counts
+        run: |
+          echo "files in docs/:  $(find docs -type f | wc -l)"
+          echo "files in app/:   $(find app  -type f | wc -l)"
+        container_image: alpine:3.20

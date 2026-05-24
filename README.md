@@ -6,6 +6,22 @@ Example pipeline YAML files for [YACD](https://github.com/r-devops/yacd) (Yet An
 > [`docs/pipeline-reference.md`](https://github.com/r-devops/yacd/blob/main/docs/pipeline-reference.md) in the main repo.
 > The examples here are recipes; the reference doc is the spec.
 
+## Materials (cloning additional repos per run)
+
+The `materials:` block at the top of a pipeline tells the agent to clone
+N extra repositories into named subdirs of the workspace before any
+step runs. Three variants are demonstrated:
+
+| File | What it shows |
+|------|---------------|
+| `multi-material-demo.yacd.yaml` | **Multiple PUBLIC materials.** Two repos cloned side-by-side into `docs/` and `readme_src/`. No credentials. |
+| `private-material-demo.yacd.yaml.example` | **Single PRIVATE material with auth.** One repo, credential resolved by name from the Credentials store (encrypted at rest). |
+| `multi-material-with-auth.yacd.yaml.example` | **Mixed PUBLIC + PRIVATE materials with auth.** Both patterns side-by-side in one pipeline. |
+
+The two `.example` files require an operator step (create the named credential
+in the UI, then rename to drop the `.example` suffix); see the comment block
+at the top of each file for the exact steps.
+
 ## Examples
 
 | File | Description |
