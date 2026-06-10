@@ -30,6 +30,7 @@ at the top of each file for the exact steps.
 | `deploy.yacd.yaml` | Deploy to target environment with input parameters |
 | `parallel-dag.yacd.yaml` | Fan-out/fan-in pattern with parallel stages |
 | `complex-dag.yacd.yaml` | Diamond dependency pattern with multiple convergence points |
+| `dag-leaf-stages.yacd.yaml` | Fan-out where one branch is a leaf (no downstream waits for it) |
 | `approval-gates.yacd.yaml` | Manual approval gates before production deployment |
 | `approval-restricted.yacd.yaml` | Approval gates with specific allowed users and groups |
 | `multi-env-deploy.yacd.yaml` | Progressive deployment: dev → staging → production with approvals |
