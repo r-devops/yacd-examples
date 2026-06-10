@@ -1,0 +1,68 @@
+name: DAG with Leaf Stages
+description: |
+  Demonstrates a fan-out + partial fan-in DAG where one branch is intentionally
+  a "leaf" — it runs in parallel with the others but nothing downstream waits
+  for it. Useful when a stage produces a side-effect (metrics push, Slack
+  notification, cache warmup) that the rest of the pipeline doesn't depend on.
+
+  Topology:
+
+    stage1
+      ├── stage2 (LEAF — nothing waits for it)
+      ├── stage3 ─┐
+      └── stage4 ─┴── stage5
+
+  The DAG view shows lines stage1->stage2, stage1->stage3, stage1->stage4,
+  stage3->stage5, stage4->stage5. No line from stage2 to stage5.
+
+  Runtime behaviour:
+    - stage5 starts as soon as stage3 AND stage4 finish.
+    - stage5 does NOT wait for stage2 — they may overlap, finish in any order.
+    - If stage2 fails, the overall run is marked failed (any stage failure
+      fails the run) but stage5 still ran. To gate stage5 on stage2's
+      success, add stage2 to stage5's `needs:` list.
+
+# Parallel-by-default so concurrent triggers can run side-by-side.
+concurrency:
+  parallel: always
+
+stages:
+  - name: stage1
+    steps:
+      - name: kickoff
+        run: |
+          echo "stage1: fanning out to stage2/3/4"
+
+  # LEAF — stage5 does NOT have stage2 in its needs.
+  - name: stage2
+    needs: [stage1]
+    steps:
+      - name: side-task
+        run: |
+          echo "stage2: side-effect, e.g. publish metrics or post to slack"
+          echo "stage5 will NOT wait for me"
+          sleep 2
+
+  - name: stage3
+    needs: [stage1]
+    steps:
+      - name: produce-b
+        run: |
+          echo "stage3: producing input for stage5"
+          sleep 1
+
+  - name: stage4
+    needs: [stage1]
+    steps:
+      - name: produce-c
+        run: |
+          echo "stage4: producing input for stage5"
+          sleep 1
+
+  # Notice: needs lists stage3 and stage4 only. stage2 is intentionally omitted.
+  - name: stage5
+    needs: [stage3, stage4]
+    steps:
+      - name: consolidate
+        run: |
+          echo "stage5: stage3 and stage4 both done; stage2 status irrelevant"
